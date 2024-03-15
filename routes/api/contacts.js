@@ -17,6 +17,27 @@ const contactSchema = Joi.object({
   phone: Joi.string().required(),
 });
 
+// PATCH /api/contacts/:contactId/favorite
+router.patch('/:contactId/favorite', async (req, res) => {
+  const { contactId } = req.params;
+  const { favorite } = req.body;
+
+  if (favorite === undefined) {
+    return res.status(400).json({ message: 'missing field favorite' });
+  }
+
+  try {
+    const updatedContact = await updateContact(contactId, { favorite });
+    if (!updatedContact) {
+      return res.status(404).json({ message: 'Contact not found' });
+    }
+    return res.status(200).json(updatedContact);
+  } catch (error) {
+    console.error('Error updating contact:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 router.get("/", async (req, res, next) => {
   try {
     const contacts = await listContacts();

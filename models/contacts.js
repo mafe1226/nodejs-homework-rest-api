@@ -2,7 +2,40 @@ const fs = require("fs/promises");
 const { json } = require("express");
 const path = require("path");
 const shortid = require("shortid");
+const mongoose = require('mongoose');
 
+
+
+const contactSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: [true, 'Set name for contact'],
+  },
+  email: String,
+  phone: String,
+  favorite: {
+    type: Boolean,
+    default: false,
+  },
+});
+
+
+const Contact = mongoose.model('Contact', contactSchema);
+
+// Conexión a la base de datos de MongoDB Atlas
+mongoose.connect('mongodb+srv://mafediazca:IgD2aL8VDUwl9SHZ@cluster0.rnweazk.mongodb.net/Cluster0' , {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => console.log('Database connection successful'))
+.catch(err => {
+  console.error('Database connection error:', err);
+  process.exit(1);
+});
+
+// Funciones de consulta
+
+// Obtener todos los contactos
 const contactsPath = path.join(__dirname, "contacts.json");
 const listContacts = async (req, res) => {
   try {
@@ -16,6 +49,7 @@ const listContacts = async (req, res) => {
   }
 };
 
+// Obtener un contacto por ID
 const getContactById = async (contactId) => {
   try {
     // Decodificar la URL para manejar caracteres especiales
@@ -32,6 +66,7 @@ const getContactById = async (contactId) => {
   }
 };
 
+// Agregar un nuevo contacto
 const addContact = async (body) => {
   try {
     const data = await fs.readFile(contactsPath, "utf-8");
@@ -53,32 +88,7 @@ const addContact = async (body) => {
     throw error;
   }
 };
-
-const removeContact = async (contactId) => {
-  try {
-    const data = await fs.readFile(contactsPath, "utf-8");
-    const contacts = JSON.parse(data);
-    const removedContact = contacts.find((contact) => contact.id === contactId);
-
-    if (!removedContact) {
-      console.log("Contact not found");
-      return null;
-    }
-
-    const updatedContacts = contacts.filter(
-      (contact) => contact.id !== contactId
-    );
-
-    await fs.writeFile(contactsPath, JSON.stringify(updatedContacts));
-    // console.log("Contact successfully removed", { id: contactId });
-
-    return removedContact;
-  } catch (error) {
-    console.log(error);
-    throw error;
-  }
-};
-
+// Actualizar un contacto
 const updateContact = async (contactId, body) => {
   try {
     const data = await fs.readFile(contactsPath, "utf-8");
@@ -106,10 +116,36 @@ const updateContact = async (contactId, body) => {
   }
 };
 
+// Eliminar un contacto
+const removeContact = async (contactId) => {
+  try {
+    const data = await fs.readFile(contactsPath, "utf-8");
+    const contacts = JSON.parse(data);
+    const removedContact = contacts.find((contact) => contact.id === contactId);
+
+    if (!removedContact) {
+      console.log("Contact not found");
+      return null;
+    }
+
+    const updatedContacts = contacts.filter(
+      (contact) => contact.id !== contactId
+    );
+
+    await fs.writeFile(contactsPath, JSON.stringify(updatedContacts));
+    // console.log("Contact successfully removed", { id: contactId });
+
+    return removedContact;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+
 module.exports = {
   listContacts,
   getContactById,
-  removeContact,
   addContact,
   updateContact,
+  removeContact,
 };
