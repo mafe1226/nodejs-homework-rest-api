@@ -3,8 +3,7 @@ const { json } = require("express");
 const path = require("path");
 const shortid = require("shortid");
 const mongoose = require('mongoose');
-
-
+mongoose.Promise = global.Promise;
 
 const contactSchema = new mongoose.Schema({
   name: {
@@ -21,13 +20,12 @@ const contactSchema = new mongoose.Schema({
 
 
 const Contact = mongoose.model('Contact', contactSchema);
-
 // Conexión a la base de datos de MongoDB Atlas
-mongoose.connect('mongodb+srv://mafediazca:IgD2aL8VDUwl9SHZ@cluster0.rnweazk.mongodb.net/Cluster0' , {
+mongoose.connect(process.env.DB_HOST, {
   useNewUrlParser: true,
+  useCreateIndex: true,
   useUnifiedTopology: true,
-})
-.then(() => console.log('Database connection successful'))
+}).then(() => console.log('Database connection successful'))
 .catch(err => {
   console.error('Database connection error:', err);
   process.exit(1);

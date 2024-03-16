@@ -18,7 +18,7 @@ const contactSchema = Joi.object({
 });
 
 // PATCH /api/contacts/:contactId/favorite
-router.patch('/:contactId/favorite', async (req, res) => {
+router.patch('/api/contacts/:contactId/favorite', async (req, res) => {
   const { contactId } = req.params;
   const { favorite } = req.body;
 
@@ -36,6 +36,11 @@ router.patch('/:contactId/favorite', async (req, res) => {
     console.error('Error updating contact:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
 
 router.get("/", async (req, res, next) => {
