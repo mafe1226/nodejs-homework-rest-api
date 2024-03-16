@@ -4,6 +4,7 @@ const path = require("path");
 const shortid = require("shortid");
 const mongoose = require('mongoose');
 
+const {Schema, model}= require("mongoose");
 const contactSchema = new mongoose.Schema({
   name: {
     type: String,
