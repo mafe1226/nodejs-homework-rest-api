@@ -3,148 +3,98 @@ const { json } = require("express");
 const path = require("path");
 const shortid = require("shortid");
 const mongoose = require('mongoose');
-mongoose.Promise = global.Promise;
 
-
+// Esquema del modelo de la colección contacts
 const contactSchema = new mongoose.Schema({
   name: {
     type: String,
     required: [true, 'Set name for contact'],
   },
-  email: String,
-  phone: String,
+  email: {
+    type: String,
+  },
+  phone: {
+    type: String,
+  },
   favorite: {
     type: Boolean,
     default: false,
   },
 });
 
-
+// Modelo de Mongoose para la colección de contactos
 const Contact = mongoose.model('Contact', contactSchema);
-// Conexión a la base de datos de MongoDB Atlas
+
+// Conexión a la base de datos MongoDB
 mongoose.connect(process.env.DB_HOST, {
   useNewUrlParser: true,
-  useCreateIndex: true,
   useUnifiedTopology: true,
-}).then(() => console.log('Database connection successful'))
-.catch(err => {
-  console.error('Database connection error:', err);
+})
+.then(() => {
+  console.log('Database connection successful');
+})
+.catch((error) => {
+  console.error('Database connection error:', error);
   process.exit(1);
 });
 
-// Funciones de consulta
-
-// Obtener todos los contactos
-const contactsPath = path.join(__dirname, "contacts.json");
-const listContacts = async (req, res) => {
+// Función para actualizar el estado del contacto
+async function updateStatusContact(contactId, body) {
   try {
-    const data = await fs.readFile(contactsPath, "utf-8");
-    const contacts = JSON.parse(data);
-
-    return contacts;
-  } catch {
-    console.error("Error getting contact  ", error);
-    throw error;
-  }
-};
-
-// Obtener un contacto por ID
-const getContactById = async (contactId) => {
-  try {
-    // Decodificar la URL para manejar caracteres especiales
-    contactId = decodeURIComponent(contactId);
-
-    const data = await fs.readFile(contactsPath, "utf-8");
-    const contacts = JSON.parse(data);
-    const contactById = contacts.find((contact) => contact.id === contactId);
-
-    return contactById;
-  } catch {
-    console.error("Error getting contact by ID: ", error);
-    throw error;
-  }
-};
-
-// Agregar un nuevo contacto
-const addContact = async (body) => {
-  try {
-    const data = await fs.readFile(contactsPath, "utf-8");
-    const contacts = JSON.parse(data);
-
-    const newContact = {
-      id: shortid.generate(),
-      name: body.name,
-      email: body.email,
-      phone: body.phone,
-    };
-
-    contacts.push(newContact);
-
-    await fs.writeFile(contactsPath, JSON.stringify(contacts));
-    console.log("The data was successfully added");
-  } catch (error) {
-    console.log(error);
-    throw error;
-  }
-};
-// Actualizar un contacto
-const updateContact = async (contactId, body) => {
-  try {
-    const data = await fs.readFile(contactsPath, "utf-8");
-    const contacts = JSON.parse(data);
-
-    const contactIndex = contacts.findIndex(
-      (contact) => contact.id === contactId
-    );
-
-    if (contactIndex === -1) {
-      console.log("Contact not found");
-      return null;
-    }
-
-    const updatedContact = { ...contacts[contactIndex], ...body };
-    contacts[contactIndex] = updatedContact;
-
-    await fs.writeFile(contactsPath, JSON.stringify(contacts));
-
-    console.log("Contact successfully updated", { id: contactId });
+    const updatedContact = await Contact.findByIdAndUpdate(contactId, { favorite: body.favorite }, { new: true });
     return updatedContact;
   } catch (error) {
-    console.log(error);
+    console.error('Error updating contact status:', error);
     throw error;
   }
-};
+}
 
-// Eliminar un contacto
-const removeContact = async (contactId) => {
-  try {
-    const data = await fs.readFile(contactsPath, "utf-8");
-    const contacts = JSON.parse(data);
-    const removedContact = contacts.find((contact) => contact.id === contactId);
-
-    if (!removedContact) {
-      console.log("Contact not found");
-      return null;
-    }
-
-    const updatedContacts = contacts.filter(
-      (contact) => contact.id !== contactId
-    );
-
-    await fs.writeFile(contactsPath, JSON.stringify(updatedContacts));
-    // console.log("Contact successfully removed", { id: contactId });
-
-    return removedContact;
-  } catch (error) {
-    console.log(error);
-    throw error;
-  }
-};
-
+// Exporta las operaciones CRUD sobre contactos
 module.exports = {
-  listContacts,
-  getContactById,
-  addContact,
-  updateContact,
-  removeContact,
+  listContacts: async () => {
+    try {
+      const contacts = await Contact.find();
+      return contacts;
+    } catch (error) {
+      console.error('Error listing contacts:', error);
+      throw error;
+    }
+  },
+  getContactById: async (contactId) => {
+    try {
+      const contact = await Contact.findById(contactId);
+      return contact;
+    } catch (error) {
+      console.error('Error getting contact by ID:', error);
+      throw error;
+    }
+  },
+  addContact: async (contactData) => {
+    try {
+      const newContact = await Contact.create(contactData);
+      return newContact;
+    } catch (error) {
+      console.error('Error adding contact:', error);
+      throw error;
+    }
+  },
+  removeContact: async (contactId) => {
+    try {
+      const removedContact = await Contact.findByIdAndRemove(contactId);
+      return removedContact;
+    } catch (error) {
+      console.error('Error removing contact:', error);
+      throw error;
+    }
+  },
+  updateContact: async (contactId, contactData) => {
+    try {
+      const updatedContact = await Contact.findByIdAndUpdate(contactId, contactData, { new: true });
+      return updatedContact;
+    } catch (error) {
+      console.error('Error updating contact:', error);
+      throw error;
+    }
+  },
+  updateStatusContact: updateStatusContact,
 };
