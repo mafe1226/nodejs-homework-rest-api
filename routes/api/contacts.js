@@ -2,6 +2,7 @@ const express = require("express");
 const Joi = require("joi");
 
 const {
+  updateFavorite,
   listContacts,
   getContactById,
   addContact,
@@ -11,6 +12,11 @@ const {
 
 const router = express.Router();
 
+const contactSchema = Joi.object({
+  name: Joi.string().required(),
+  email: Joi.string().email().required(),
+  phone: Joi.string().required(),
+});
 
 router.get("/", async (req, res, next) => {
   try {
@@ -98,21 +104,9 @@ router.put("/:contactId", async (req, res, next) => {
     }
   }
 });
-
-router.patch('/api/contacts/:contactId/favorite', async (req, res) => {
-  const { contactId } = req.params;
-  const { favorite } = req.body;
-
-  if (favorite === undefined) {
-    return res.status(400).json({ message: 'missing field favorite' });
-  }
-
+router.patch('/:contactId/favorite', async (req, res) => {
   try {
-    const updatedContact = await updateStatusContact(contactId, { favorite });
-    if (!updatedContact) {
-      return res.status(404).json({ message: 'Contact not found' });
-    }
-    return res.status(200).json(updatedContact);
+    await updateFavorite(req, res);
   } catch (error) {
     console.error('Error updating contact:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
