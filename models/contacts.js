@@ -2,6 +2,52 @@ const fs = require("fs/promises");
 const { json } = require("express");
 const path = require("path");
 const shortid = require("shortid");
+const mongoose = require('mongoose');
+
+const {Schema, model}= require("mongoose");
+const contactSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: [true, 'Set name for contact'],
+  },
+  email: {
+    type: String,
+  },
+  phone: {
+    type: String,
+  },
+  favorite: {
+    type: Boolean,
+    default: false,
+  },
+});
+// Conexión a la base de datos MongoDB
+mongoose.connect(process.env.DB_HOST, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => {
+  console.log('Database connection successful');
+})
+.catch((error) => {
+  console.error('Database connection error:', error);
+  process.exit(1);
+});
+// Función para actualizar el estado del contacto
+const Contact = model("contact",contactSchema)
+
+const updateFavorite = async (req, res) => {
+  const {contactId}=req.params;
+  const {favorite}=req.body;
+  const result =await Contact.findByIdAndUpdate(contactId,{favorite},{new:true})
+    res.json({
+      status:"success",
+      code:200,
+      data:{
+         result
+         }
+         });
+} 
 
 const contactsPath = path.join(__dirname, "contacts.json");
 const listContacts = async (req, res) => {
@@ -107,6 +153,7 @@ const updateContact = async (contactId, body) => {
 };
 
 module.exports = {
+  updateFavorite,
   listContacts,
   getContactById,
   removeContact,

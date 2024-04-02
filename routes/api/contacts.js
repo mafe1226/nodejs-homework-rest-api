@@ -2,6 +2,7 @@ const express = require("express");
 const Joi = require("joi");
 
 const {
+  updateFavorite,
   listContacts,
   getContactById,
   addContact,
@@ -101,6 +102,14 @@ router.put("/:contactId", async (req, res, next) => {
       console.error("Error updating contact:", error);
       res.status(500).json({ error: "Internal Server Error" });
     }
+  }
+});
+router.patch('/:contactId/favorite', async (req, res) => {
+  try {
+    await updateFavorite(req, res);
+  } catch (error) {
+    console.error('Error updating contact:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
